@@ -63,20 +63,25 @@ export function BookingForm({
     start(async () => {
       const supabase = createClient();
       const images = await uploadImages(supabase);
-      const { error } = await supabase.from("orders").insert({
-        customer_name: form.customer_name,
-        customer_phone: form.customer_phone,
-        customer_email: form.customer_email || null,
-        address: form.address,
-        province: form.province || null,
-        district: form.district || null,
-        service_id: form.service_id || null,
-        description: form.description || null,
-        images,
-        scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_name: form.customer_name,
+          customer_phone: form.customer_phone,
+          customer_email: form.customer_email || null,
+          address: form.address,
+          province: form.province || null,
+          district: form.district || null,
+          service_id: form.service_id || null,
+          description: form.description || null,
+          images,
+          scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
+        }),
       });
-      if (error) {
-        toast.error("Có lỗi xảy ra: " + error.message);
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: "Unknown" }));
+        toast.error("Có lỗi: " + error);
         return;
       }
       toast.success("Đặt lịch thành công! Tổng đài sẽ liên hệ trong 5 phút.");

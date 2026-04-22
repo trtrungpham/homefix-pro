@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Input, Select, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 
 type ServiceOption = { id: string; name: string };
 
@@ -30,15 +29,19 @@ export function QuickBookingForm({ services }: { services: ServiceOption[] }) {
       return;
     }
     start(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("orders").insert({
-        customer_name: form.customer_name,
-        customer_phone: form.customer_phone,
-        address: form.address || "Chưa cung cấp",
-        service_id: form.service_id || null,
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_name: form.customer_name,
+          customer_phone: form.customer_phone,
+          address: form.address || "Chưa cung cấp",
+          service_id: form.service_id || null,
+        }),
       });
-      if (error) {
-        toast.error("Có lỗi xảy ra: " + error.message);
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: "Unknown" }));
+        toast.error("Có lỗi: " + error);
         return;
       }
       toast.success("Đã gửi yêu cầu! Tổng đài sẽ gọi lại trong 5 phút.");

@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Input, Textarea, Select, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 
 const projectTypes = [
   "Nhà phố",
@@ -41,21 +40,25 @@ export function ProjectInquiryForm() {
       return;
     }
     start(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("project_inquiries").insert({
-        company_name: form.company_name,
-        tax_code: form.tax_code || null,
-        contact_name: form.contact_name,
-        contact_phone: form.contact_phone,
-        contact_email: form.contact_email || null,
-        project_type: form.project_type,
-        area_sqm: form.area_sqm ? Number(form.area_sqm) : null,
-        budget: form.budget ? Number(form.budget) : null,
-        timeline: form.timeline || null,
-        description: form.description || null,
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_name: form.company_name,
+          tax_code: form.tax_code || null,
+          contact_name: form.contact_name,
+          contact_phone: form.contact_phone,
+          contact_email: form.contact_email || null,
+          project_type: form.project_type,
+          area_sqm: form.area_sqm ? Number(form.area_sqm) : null,
+          budget: form.budget ? Number(form.budget) : null,
+          timeline: form.timeline || null,
+          description: form.description || null,
+        }),
       });
-      if (error) {
-        toast.error("Có lỗi xảy ra: " + error.message);
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: "Unknown" }));
+        toast.error("Có lỗi: " + error);
         return;
       }
       toast.success("Đã gửi yêu cầu! Bộ phận kinh doanh sẽ liên hệ trong 24 giờ.");
